@@ -1,0 +1,13 @@
+{
+  "itemGroup.csutility": "Example Mod Tab",
+  "block.csutility.example_block": "Example Block",
+  "item.csutility.example_item": "Example Item",
+
+  "csutility.configuration.title": "CS Utility Configs",
+  "csutility.configuration.section.csutility.common.toml": "CS Utility Configs",
+  "csutility.configuration.section.csutility.common.toml.title": "CS Utility Configs",
+  "csutility.configuration.items": "Item List",
+  "csutility.configuration.logDirtBlock": "Log Dirt Block",
+  "csutility.configuration.magicNumberIntroduction": "Magic Number Text",
+  "csutility.configuration.magicNumber": "Magic Number"
+}
