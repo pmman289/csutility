@@ -44,6 +44,9 @@ public class CSUtility {
         // 注册实体
         ModEntities.register(modEventBus);
 
+        // 注册声音
+        ModSounds.register(modEventBus);
+
         // 注册创造物品栏
         modEventBus.addListener(this::addCreativeTab);
 

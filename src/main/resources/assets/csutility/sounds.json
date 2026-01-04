@@ -1,0 +1,26 @@
+{
+  "c4bomb_beep": {
+    "category": "block",
+    "sounds": [
+      "csutility:c4bomb_beep"
+    ]
+  },
+  "c4bomb_defused_and_ctwin": {
+    "category": "block",
+    "sounds": [
+      "csutility:c4bomb_defused_and_ctwin"
+    ]
+  },
+  "c4bomb_planting": {
+    "category": "block",
+    "sounds": [
+      "csutility:c4bomb_planting"
+    ]
+  },
+  "c4bomb_readyboom": {
+    "category": "block",
+    "sounds": [
+      "csutility:c4bomb_readyboom"
+    ]
+  }
+}

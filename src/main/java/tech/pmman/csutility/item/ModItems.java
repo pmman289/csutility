@@ -5,6 +5,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import tech.pmman.csutility.CSUtility;
+import tech.pmman.csutility.item.c4Bomb.C4Bomb;
 
 public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CSUtility.MODID);

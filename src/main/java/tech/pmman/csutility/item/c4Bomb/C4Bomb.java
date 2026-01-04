@@ -1,7 +1,8 @@
-package tech.pmman.csutility.item;
+package tech.pmman.csutility.item.c4Bomb;
 
+import net.minecraft.network.protocol.game.ClientboundStopSoundPacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -16,8 +17,10 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.CSUtility;
+import tech.pmman.csutility.ModSounds;
 import tech.pmman.csutility.entity.ModEntities;
 import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
+import tech.pmman.csutility.util.LevelTool;
 
 public class C4Bomb extends Item {
     private static final ResourceLocation C4_FREEZE_ID =
@@ -45,10 +48,21 @@ public class C4Bomb extends Item {
         return UseAnim.BOW;
     }
 
+    private void playBombPlantingSound(Player player){
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                ModSounds.C4BOMB_PLANTING.get(),
+                SoundSource.BLOCKS,
+                1.0f,
+                1.0f
+        );
+    }
+
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player,
                                                            @NotNull InteractionHand usedHand) {
         player.startUsingItem(usedHand);
+        // 播放c4安装中声音
+        playBombPlantingSound(player);
         return InteractionResultHolder.consume(player.getItemInHand(usedHand));
     }
 
@@ -71,7 +85,22 @@ public class C4Bomb extends Item {
     @Override
     public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level,
                              @NotNull LivingEntity livingEntity, int timeCharged) {
-        removeFreeze(livingEntity);
+        if (LevelTool.isServerSide(level)){
+            removeFreeze(livingEntity);
+            // 广播停止播放音频包
+            // 1. 获取声音的 ResourceLocation
+            ResourceLocation soundLocation = ModSounds.C4BOMB_PLANTING.getId();
+
+            // 2. 创建停止声音的数据包
+            // 参数：声音 ID, 声音分类 (必须和播放时一致，比如 SoundSource.PLAYERS 或 BLOCKS)
+            ClientboundStopSoundPacket stopPacket = new ClientboundStopSoundPacket(soundLocation, SoundSource.BLOCKS);
+
+            // 3. 广播给附近的所有玩家
+            // 找到实体坐标附近的所有玩家并发送包
+            double radius = 16.0; // 停止半径，建议与声音传播范围一致
+            level.getEntitiesOfClass(ServerPlayer.class, livingEntity.getBoundingBox().inflate(radius)).forEach(
+                    player -> player.connection.send(stopPacket));
+        }
         super.releaseUsing(stack, level, livingEntity, timeCharged);
     }
 
@@ -95,9 +124,6 @@ public class C4Bomb extends Item {
             // 4. 将实体安放到世界中
             // 这相当于把对象交给 Level 的管理引擎，随后它的 tick() 方法就会开始跑
             level.addFreshEntity(c4);
-
-            // 播放安放音效 (在玩家位置播放)
-            level.playSound(null, x, y, z, SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0f, 1.0f);
 
             // 消耗物品
             if (!player.getAbilities().instabuild) {

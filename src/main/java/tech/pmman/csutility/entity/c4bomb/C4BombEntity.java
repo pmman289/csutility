@@ -20,10 +20,22 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import tech.pmman.csutility.ModSounds;
+import tech.pmman.csutility.client.ClientSoundPlayer;
+import tech.pmman.csutility.util.LevelTool;
 
 public class C4BombEntity extends Entity {
     private Player defusingPlayer;
     private ServerBossEvent defuseProgressBossBar;
+
+    private boolean isStartedBeep = false;
+
+    // 等待爆炸的计数器，此时已经无法拆弹
+    private int readyBoomCount = (int) (1.3 * 20);
+    private boolean canDefuse = true;
+
+    // 用来记录是否是正常拆除以判断是否播放拆除音效
+    private boolean isDefused = false;
 
     // 使用 SyncedData 确保服务端修改倒计时，客户端能同步看到闪烁等效果
     private static final EntityDataAccessor<Integer> BOMB_COUNTDOWN =
@@ -37,6 +49,10 @@ public class C4BombEntity extends Entity {
         this.noPhysics = true;
     }
 
+    public boolean isDefused() {
+        return isDefused;
+    }
+
     @Override
     public boolean isPickable() {
         return true;
@@ -44,27 +60,10 @@ public class C4BombEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        // 5秒倒计时
+        // 40秒倒计时
         builder.define(BOMB_COUNTDOWN, 40 * 20);
         // 10秒拆除时间
         builder.define(BOMB_DEFUSE_COUNT, 10 * 20);
-    }
-
-    private void playTickSound(int currentFuse) {
-        // 播放滴滴声
-        int interval;
-        if (currentFuse > 20 * 20) interval = 20; // 每秒1次
-        else if (currentFuse > 10 * 20) interval = 10; // 每秒2次
-        else if (currentFuse > 5 * 20) interval = 5; // 每秒2次
-        else interval = 2; // 每秒10次
-        if (currentFuse % interval == 0) {
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    SoundEvents.EXPERIENCE_ORB_PICKUP,
-                    SoundSource.BLOCKS,
-                    1.0f,
-                    2.0f
-            );
-        }
     }
 
     private void initBossBar() {
@@ -85,30 +84,70 @@ public class C4BombEntity extends Entity {
                 SoundEvents.NOTE_BLOCK_BIT.value(), SoundSource.BLOCKS, 0.8f, 2.0f);
     }
 
+
+    private void playReadyBoomSound(){
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                ModSounds.C4BOMB_READYBOOM.get(),
+                SoundSource.BLOCKS,
+                1.0f,
+                1.0f
+        );
+    }
+
     @Override
     public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
-        if (isServerSide() && defusingPlayer == null) {
+        if (LevelTool.isServerSide(level()) && defusingPlayer == null) {
             defusingPlayer = player;
             playDefuseSound();
         }
         return InteractionResult.CONSUME;
     }
 
+    /**
+     * 判断是否即将被拆除
+     * @return 结果
+     */
+    private boolean willDefused(){
+        return entityData.get(BOMB_DEFUSE_COUNT) <= 0;
+    }
+
     @Override
     public void tick() {
         super.tick();
-        if (isServerSide()) {
+        // 客户端播放音频逻辑
+        if (level().isClientSide()){
+            if (!isStartedBeep) {
+                ClientSoundPlayer.playBombBeepSoundOnClient(this);
+                // 注册拆除音效，等待实体销毁后播放
+                ClientSoundPlayer.registerDefusedSound(this);
+                isStartedBeep = true;
+            }
+        }
+        if (LevelTool.isServerSide(level())) {
             tickDefuseProgress();
 
             int currentFuse = this.entityData.get(BOMB_COUNTDOWN) - 1;
             this.entityData.set(BOMB_COUNTDOWN, currentFuse);
-            if (currentFuse >= 0) {
-                playTickSound(currentFuse);
-            } else {
-                // 爆炸并销毁实体
-                explore();
+            if (currentFuse < 0) {
+                // 如果计数器归零，设置不允许拆弹
+                if (canDefuse){
+                    canDefuse = false;
+                    // 播放最终音效
+                    playReadyBoomSound();
+                }
+                // 开始计算即将爆炸计数器，此时只能等待爆炸
+                readyBoomCount--;
+                if (readyBoomCount < 0){
+                    // 爆炸并销毁实体
+                    explore();
+                }
             }
         }
+    }
+
+    @Override
+    public void onAddedToLevel() {
+        super.onAddedToLevel();
     }
 
     private void explore() {
@@ -119,12 +158,7 @@ public class C4BombEntity extends Entity {
     }
 
     private void defuseBomb() {
-        // 播放拆除音效
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.UI_BUTTON_CLICK, SoundSource.BLOCKS, 1.0f, 1.0f);
-        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.BLOCKS, 1.0f, 0.5f);
-
+        isDefused = true;
         destroy();
     }
 
@@ -135,10 +169,6 @@ public class C4BombEntity extends Entity {
             defuseProgressBossBar = null;
         }
         discard();
-    }
-
-    private boolean isServerSide() {
-        return !this.level().isClientSide();
     }
 
     private boolean isPlayerLookingAtMe(Player player) {
@@ -165,7 +195,7 @@ public class C4BombEntity extends Entity {
 
     private void tickDefuseProgress() {
         // 检查拆除情况
-        if (defusingPlayer != null) {
+        if (canDefuse && defusingPlayer != null) {
             int currentDefuseCount = entityData.get(BOMB_DEFUSE_COUNT);
             // 展示拆除进度条
             if (defusingPlayer instanceof ServerPlayer serverPlayer) {
@@ -179,20 +209,28 @@ public class C4BombEntity extends Entity {
             }
             // 检查玩家是否还在看向c4
             if (isPlayerLookingAtMe(defusingPlayer)) {
-                // 减少拆除计数
-                entityData.set(BOMB_DEFUSE_COUNT, currentDefuseCount - 1);
                 // 检查c4是否可以拆除
-                if (currentDefuseCount <= 0) {
-                    // 销毁实体
+                if (willDefused()) {
+                    // 拆除炸弹
                     defuseBomb();
                 }
+                // 减少拆除计数
+                entityData.set(BOMB_DEFUSE_COUNT, currentDefuseCount - 1);
             } else {
                 // 销毁进度条
-                defuseProgressBossBar.removeAllPlayers();
-                defuseProgressBossBar = null;
+                if (defuseProgressBossBar != null) {
+                    defuseProgressBossBar.removeAllPlayers();
+                    defuseProgressBossBar = null;
+                }
                 resetDefuseProgress();
                 defusingPlayer = null;
             }
+        }else if (!canDefuse && defuseProgressBossBar != null){
+            // 归零进度，销毁进度条
+            defuseProgressBossBar.removeAllPlayers();
+            defuseProgressBossBar = null;
+            resetDefuseProgress();
+            defusingPlayer = null;
         }
     }
 

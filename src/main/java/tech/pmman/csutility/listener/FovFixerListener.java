@@ -6,7 +6,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ComputeFovModifierEvent;
 import tech.pmman.csutility.CSUtility;
-import tech.pmman.csutility.item.C4Bomb;
+import tech.pmman.csutility.item.c4Bomb.C4Bomb;
 
 @EventBusSubscriber(value = Dist.CLIENT, modid = CSUtility.MODID)
 public class FovFixerListener {
