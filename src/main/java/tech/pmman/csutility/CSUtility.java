@@ -1,5 +1,7 @@
 package tech.pmman.csutility;
 
+import net.minecraft.world.item.CreativeModeTabs;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -14,6 +16,8 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import tech.pmman.csutility.entity.ModEntities;
+import tech.pmman.csutility.item.ModItems;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(CSUtility.MODID)
@@ -34,9 +38,24 @@ public class CSUtility {
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
 
+        // 注册物品
+        ModItems.register(modEventBus);
+
+        // 注册实体
+        ModEntities.register(modEventBus);
+
+        // 注册创造物品栏
+        modEventBus.addListener(this::addCreativeTab);
+
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    private void addCreativeTab(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
+            event.accept(ModItems.C4BOMB);
+        }
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
