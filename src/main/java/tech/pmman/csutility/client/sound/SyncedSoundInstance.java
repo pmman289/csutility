@@ -49,6 +49,10 @@ public class SyncedSoundInstance extends AbstractSoundInstance {
         this.channel = channel;
     }
 
+    public void stopPlay(){
+        channel.stop();
+    }
+
     // 关闭 MC 默认的距离衰减
     @Override
     public @NotNull Attenuation getAttenuation() {

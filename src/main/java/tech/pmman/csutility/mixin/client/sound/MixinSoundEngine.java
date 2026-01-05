@@ -44,7 +44,7 @@ public abstract class MixinSoundEngine {
                 // 设置基础音量
                 ext.syncedSound$setBaseVolume(instance.getVolume());
 
-                // 设置 3D 衰减模型
+                // 设置声音传播距离
                 ext.syncedSound$setupAttenuation(synced.getMaxDistance());
 
                 // 计算时间偏移

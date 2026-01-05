@@ -81,7 +81,6 @@ public class MixinChannel implements IChannelExtension {
             stream.read(bytesToSkip);
 
             AL11.alSourcef(source, AL11.AL_SEC_OFFSET, syncedSound$seekSecond);
-            System.out.println("skipped: " + syncedSound$seekSecond);
         } catch (Exception e) {
             throw new RuntimeException("Audio seek failed", e);
         }
@@ -107,7 +106,6 @@ public class MixinChannel implements IChannelExtension {
 
             if (syncedSound$seekSecond > 0) {
                 AL11.alSourcef(source, AL11.AL_SEC_OFFSET, syncedSound$seekSecond);
-                System.out.println("skipped: " + syncedSound$seekSecond);
                 syncedSound$seekSecond = 0;
             }
         };
