@@ -21,7 +21,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.client.ClientSoundPlayer;
+import tech.pmman.csutility.client.sound.ClientSoundPlayer;
 import tech.pmman.csutility.util.LevelTool;
 
 public class C4BombEntity extends Entity {
@@ -42,11 +42,18 @@ public class C4BombEntity extends Entity {
             SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> BOMB_DEFUSE_COUNT =
             SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.INT);
+    // 记录炸弹的安放时间
+    private static final EntityDataAccessor<Long> BOMB_PLANTED_TICK_TIME =
+            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.LONG);
 
     public C4BombEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
         // 禁用重力
         this.noPhysics = true;
+    }
+
+    public long getBombPlantedTickTime() {
+        return entityData.get(BOMB_PLANTED_TICK_TIME);
     }
 
     public boolean isDefused() {
@@ -64,6 +71,8 @@ public class C4BombEntity extends Entity {
         builder.define(BOMB_COUNTDOWN, 40 * 20);
         // 10秒拆除时间
         builder.define(BOMB_DEFUSE_COUNT, 10 * 20);
+        // 记录炸弹安放时间
+        builder.define(BOMB_PLANTED_TICK_TIME, level().getGameTime());
     }
 
     private void initBossBar() {
@@ -241,10 +250,13 @@ public class C4BombEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
         if (compound.contains("Fuse")) this.entityData.set(BOMB_COUNTDOWN, compound.getInt("Fuse"));
+        if (compound.contains("bombPlantedTickTime")) this.entityData.set(BOMB_PLANTED_TICK_TIME,
+                compound.getLong("bombPlantedTickTime"));
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
         compound.putInt("Fuse", this.entityData.get(BOMB_COUNTDOWN));
+        compound.putLong("bombPlantedTickTime", entityData.get(BOMB_PLANTED_TICK_TIME));
     }
 }

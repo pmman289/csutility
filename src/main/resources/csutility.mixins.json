@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "tech.pmman.csutility.mixin",
+  "mixins": [
+  ],
+  "client": [
+    "client.sound.MixinChannel",
+    "client.sound.MixinSoundEngine"
+  ],
+  "server": [
+  ],
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
