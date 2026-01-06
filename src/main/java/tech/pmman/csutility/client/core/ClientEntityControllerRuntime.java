@@ -98,6 +98,9 @@ public class ClientEntityControllerRuntime {
     public static void clear() {
         CLIENT_CONTROLLER_MAP.values().forEach(ClientController::afterRemoved);
         CLIENT_CONTROLLER_MAP.clear();
+        CLIENT_CONTROLLER_WAIT_READY_MAP.values().forEach(ClientController::afterRemoved);
+        CLIENT_CONTROLLER_WAIT_READY_MAP.clear();
+        PENDING_PACKET_QUEUE.clear();
     }
 
     private static void flushPacketQueue(int entityId, ClientController controller) {
