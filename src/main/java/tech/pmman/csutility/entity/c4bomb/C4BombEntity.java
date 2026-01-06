@@ -21,6 +21,7 @@ import tech.pmman.csutility.network.packet.c4bomb.C4BombEventType;
 import tech.pmman.csutility.util.MinecraftTool;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 public class C4BombEntity extends Entity implements SyncDataEntity {
     /* ---------------- Synced Data ---------------- */
@@ -66,7 +67,7 @@ public class C4BombEntity extends Entity implements SyncDataEntity {
 
     /* ---------------- Server State ---------------- */
 
-    private Player defusingPlayer;
+    private ServerPlayer defusingPlayer;
 
     private int readyBoomCount = (int) (1.3 * 20);
     private boolean canDefuse = true;
@@ -177,7 +178,9 @@ public class C4BombEntity extends Entity implements SyncDataEntity {
 
         int count = entityData.get(DEFUSE_COUNTDOWN);
 
-        if (!isPlayerLookingAtMe(defusingPlayer)) {
+        if (!isPlayerLookingAtMe(defusingPlayer) || Objects.requireNonNull(
+                level().getServer()).getPlayerList().getPlayer(defusingPlayer.getUUID()) != defusingPlayer
+        ) {
             resetDefuse();
             return;
         }

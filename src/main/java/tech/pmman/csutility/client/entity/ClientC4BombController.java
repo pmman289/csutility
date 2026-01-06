@@ -4,6 +4,8 @@ import lombok.Getter;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import tech.pmman.csutility.ModSounds;
 import tech.pmman.csutility.client.core.ClientController;
 import tech.pmman.csutility.client.sound.ClientSoundPlayer;
@@ -12,6 +14,7 @@ import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
 import tech.pmman.csutility.util.MinecraftTool;
 
+@OnlyIn(Dist.CLIENT)
 public final class ClientC4BombController implements ClientController {
     @Getter
     // 标记正在被我拆除的炸弹

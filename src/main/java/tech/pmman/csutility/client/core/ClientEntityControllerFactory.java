@@ -2,6 +2,8 @@ package tech.pmman.csutility.client.core;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import tech.pmman.csutility.client.entity.ClientC4BombController;
 import tech.pmman.csutility.entity.ModEntities;
 import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
@@ -10,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@OnlyIn(Dist.CLIENT)
 public class ClientEntityControllerFactory {
     private static final Map<EntityType<?>, Function<Entity, ClientController>> REGISTRY =
             new HashMap<>();
