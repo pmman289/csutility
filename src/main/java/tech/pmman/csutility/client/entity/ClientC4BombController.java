@@ -1,108 +1,83 @@
 package tech.pmman.csutility.client.entity;
 
-import net.minecraft.client.Minecraft;
+import lombok.Getter;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.Entity;
 import tech.pmman.csutility.ModSounds;
+import tech.pmman.csutility.client.core.ClientController;
+import tech.pmman.csutility.client.sound.ClientSoundPlayer;
 import tech.pmman.csutility.client.sound.SyncedSoundInstance;
 import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
+import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
+import tech.pmman.csutility.util.MinecraftTool;
 
-import java.lang.ref.WeakReference;
-import java.util.*;
+public final class ClientC4BombController implements ClientController {
+    @Getter
+    // 标记正在被我拆除的炸弹
+    private static C4BombEntity bombDefusingByMe;
 
-public final class ClientC4BombController {
-    // 存放实体弱引用集合
-    private static final Set<C4BombEntity> ENTITY_SET = Collections.newSetFromMap(new WeakHashMap<>());
-    private static final Map<C4BombEntity, SyncedSoundInstance> BEEP_SOUND_MAP = new WeakHashMap<>();
-    private static WeakReference<C4BombEntity> currentDefusingBombByMe = new WeakReference<>(null);
+    private C4BombEntity entity;
+    private SyncedSoundInstance bombPlantedSoundInstance;
 
-    public static C4BombEntity getCurrentDefusingBombByMe() {
-        return currentDefusingBombByMe.get();
+    public ClientC4BombController(C4BombEntity entity) {
+        this.entity = entity;
     }
 
-    /**
-     * 实体应当主动调用此方法将自己注册进来
-     *
-     * @param entity 实体
-     */
-    public static void register(C4BombEntity entity) {
-        if (ENTITY_SET.stream()
-                .filter(e -> e.getStringUUID().equals(entity.getStringUUID()))
-                .findFirst()
-                .isEmpty()
-        ) {
-            ENTITY_SET.add(entity);
-        }
+    @Override
+    public void init() {
+        playBombPlantedSound();
     }
 
-    public static void onClientTick(Level level) {
-        if (Minecraft.getInstance().player == null) {
-            // 当本地玩家对象为null时，结束tick
-            return;
-        }
-        HashSet<C4BombEntity> removeSet = new HashSet<>();
-        // 开始时先清空拆除中的炸弹对象
-        currentDefusingBombByMe = new WeakReference<>(null);
-        for (C4BombEntity entity : ENTITY_SET) {
-            // -----拆弹进度条处理-----
-            if (entity.getDefusingPlayerUUID().equals(Minecraft.getInstance().player.getStringUUID())) {
-                currentDefusingBombByMe = new WeakReference<>(entity);
-            }
-
-            // -----声音处理-----
-            // 被拆除的炸弹停止播放beep，播放拆除音效
-            if (entity.isDefused()) {
-                stopPlayBeep(entity);
-                playDefusedSound(entity);
-                // 标记移除实体
-                removeSet.add(entity);
-            } else if (!BEEP_SOUND_MAP.containsKey(entity) && entity.getBombPlantedTickTime() != -1) {
-                // 未播放beep声的开始播放
-                startPlayBeep(entity);
-            } else if (entity.isRemoved()) {
-                // 如果实体被移除则也停止播放
-                stopPlayBeep(entity);
-                // 标记移除实体
-                removeSet.add(entity);
+    @Override
+    public void tick() {
+        String stringUUID = MinecraftTool.getLocalPlayerStringUUID();
+        // 检测是否是本地玩家在拆除炸弹，否则移除
+        if (bombDefusingByMe != null) {
+            if (stringUUID != null && !stringUUID.equals(entity.getDefusingPlayerUUID())) {
+                bombDefusingByMe = null;
             }
         }
-        // 移除实体
-        ENTITY_SET.removeAll(removeSet);
     }
 
-    public static void startPlayBeep(C4BombEntity entity) {
-        SyncedSoundInstance syncedBombBeepSound = new SyncedSoundInstance(ModSounds.C4BOMB_BEEP.get(),
-                entity.position(),
-                entity.getBombPlantedTickTime(),
-                1.0f,
-                60f,
-                false
-        );
-        Minecraft.getInstance().getSoundManager()
-                .play(syncedBombBeepSound);
-        // 加入map
-        BEEP_SOUND_MAP.put(entity, syncedBombBeepSound);
+    @Override
+    public void handlePacket(CustomPacketPayload packet) {
+        if (packet instanceof C4BombEventPacket eventPacket) {
+            switch (eventPacket.getEventType()) {
+                case BOMB_DEFUSING_BY_ME -> bombDefusingByMe = entity;
+                case BOMB_DEFUSED -> {
+                    // 先停止播放beep音效
+                    stopPlayBombPlantedSound();
+                    playBombDefusedSound();
+                }
+            }
+        }
     }
 
-    public static void stopPlayBeep(C4BombEntity entity) {
-        SyncedSoundInstance s = BEEP_SOUND_MAP.remove(entity);
-        if (s != null) s.stopPlay();
+    @Override
+    public void afterRemoved() {
+        if (bombPlantedSoundInstance != null) bombPlantedSoundInstance.stopPlay();
+        entity = null;
+        bombDefusingByMe = null;
     }
 
-    private static void playDefusedSound(C4BombEntity bomb) {
-        assert Minecraft.getInstance().level != null;
-        Minecraft.getInstance().level.playLocalSound(
-                bomb.getX(), bomb.getY(), bomb.getZ(),
-                ModSounds.C4BOMB_DEFUSED_AND_CTWIN.get(),
-                SoundSource.BLOCKS,
-                1f, 1f, false
-        );
+    @Override
+    public Entity getEntity() {
+        return entity;
     }
 
-    public static void clear(){
-        ENTITY_SET.clear();
-        BEEP_SOUND_MAP.clear();
-        currentDefusingBombByMe.clear();
+    private void playBombPlantedSound() {
+        bombPlantedSoundInstance = ClientSoundPlayer.playSyncedSound(ModSounds.C4BOMB_PLANTED_TO_READY_BOOM.get(),
+                entity.position(), entity.getBombPlantedTickTime(), 1f, 60f, false);
+    }
+
+    private void playBombDefusedSound() {
+        ClientSoundPlayer.playNormalSound(ModSounds.C4BOMB_DEFUSED_AND_CTWIN.get(), entity.position(),
+                SoundSource.BLOCKS, 1.0f, 1.0f);
+    }
+
+    private void stopPlayBombPlantedSound() {
+        bombPlantedSoundInstance.stopPlay();
     }
 }
 

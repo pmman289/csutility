@@ -2,6 +2,7 @@ package tech.pmman.csutility.entity.c4bomb;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.*;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -11,14 +12,17 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.client.entity.ClientC4BombController;
-import tech.pmman.csutility.util.LevelTool;
+import tech.pmman.csutility.entity.SyncDataEntity;
+import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
+import tech.pmman.csutility.network.packet.c4bomb.C4BombEventType;
+import tech.pmman.csutility.util.MinecraftTool;
 
 import javax.annotation.Nullable;
 
-public class C4BombEntity extends Entity {
+public class C4BombEntity extends Entity implements SyncDataEntity {
     /* ---------------- Synced Data ---------------- */
 
     public static final EntityDataAccessor<Integer> BOMB_COUNTDOWN =
@@ -30,27 +34,33 @@ public class C4BombEntity extends Entity {
     public static final EntityDataAccessor<String> DEFUSING_PLAYER_UUID =
             SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.STRING);
 
-    public static final EntityDataAccessor<Boolean> IS_DEFUSED =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.BOOLEAN);
-
     // 炸弹第一次放置的时间
     public static final EntityDataAccessor<Long> BOMB_PLANTED_TICK_TIME =
             SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.LONG);
 
-    public boolean isDefused(){
-        return entityData.get(IS_DEFUSED);
-    }
+    // 实体数据是否同步完毕
+    public static final EntityDataAccessor<Boolean> IS_READY =
+            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.BOOLEAN);
 
-    public Long getBombPlantedTickTime(){
+    public Long getBombPlantedTickTime() {
         return entityData.get(BOMB_PLANTED_TICK_TIME);
     }
 
-    private void setBombPlantedTickTime(long time){
+    private void setBombPlantedTickTime(long time) {
         entityData.set(BOMB_PLANTED_TICK_TIME, time);
     }
 
-    public String getDefusingPlayerUUID(){
+    public String getDefusingPlayerUUID() {
         return entityData.get(DEFUSING_PLAYER_UUID);
+    }
+
+    @Override
+    public boolean isReady() {
+        return entityData.get(IS_READY);
+    }
+
+    private void syncReady() {
+        entityData.set(IS_READY, true);
     }
     /* ---------------- Client Data ----------------- */
 
@@ -65,12 +75,14 @@ public class C4BombEntity extends Entity {
     // 延迟5ticks销毁
     private int delayDestroyTick = 5;
 
-    private void setDefusingPlayer(@Nullable Player defusingPlayer) {
+    private void setDefusingPlayer(@Nullable ServerPlayer defusingPlayer) {
         this.defusingPlayer = defusingPlayer;
         // 设置同步参数
         if (defusingPlayer != null) {
             entityData.set(DEFUSING_PLAYER_UUID, defusingPlayer.getStringUUID());
-        }else {
+            // 通知该玩家正在拆除炸弹
+            PacketDistributor.sendToPlayer(defusingPlayer, new C4BombEventPacket(getId(), C4BombEventType.BOMB_DEFUSING_BY_ME));
+        } else {
             entityData.set(DEFUSING_PLAYER_UUID, "");
         }
     }
@@ -85,8 +97,8 @@ public class C4BombEntity extends Entity {
         builder.define(BOMB_COUNTDOWN, 40 * 20);
         builder.define(DEFUSE_COUNTDOWN, 10 * 20);
         builder.define(DEFUSING_PLAYER_UUID, "");
-        builder.define(IS_DEFUSED, false);
         builder.define(BOMB_PLANTED_TICK_TIME, -1L);
+        builder.define(IS_READY, false);
     }
 
     /* ---------------- Interaction ---------------- */
@@ -99,9 +111,9 @@ public class C4BombEntity extends Entity {
 
     @Override
     public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
-        if (LevelTool.isServerSide(level()) && defusingPlayer == null && canDefuse) {
-            setDefusingPlayer(player);
-            playDefuseStartSound();
+        if (MinecraftTool.isServerSide(level()) && defusingPlayer == null && canDefuse) {
+            setDefusingPlayer((ServerPlayer) player);
+            broadcastDefuseStartSound();
         }
         return InteractionResult.CONSUME;
     }
@@ -116,8 +128,8 @@ public class C4BombEntity extends Entity {
             return;
         }
         // 延迟销毁逻辑
-        if (willDestroy){
-            if (delayDestroyTick-- < 0){
+        if (willDestroy) {
+            if (delayDestroyTick-- < 0) {
                 discard();
             }
             return;
@@ -131,8 +143,9 @@ public class C4BombEntity extends Entity {
         if (fuse < 0) {
             canDefuse = false;
 
-            if (readyBoomCount-- == (int)(1.3 * 20)) {
-                playReadyBoomSound();
+            // 只有第一次执行到这里时会播放
+            if (readyBoomCount-- == (int) (1.3 * 20)) {
+                broadcastReadyBoomSound();
             }
 
             if (readyBoomCount <= 0) {
@@ -142,18 +155,19 @@ public class C4BombEntity extends Entity {
     }
 
     @Override
-    // 在这里将自己注册到客户端控制器
     public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (level().isClientSide()){
-            ClientC4BombController.register(this);
+        // 不执行客户端逻辑
+        if (level().isClientSide()) {
+            return;
         }
-        if (LevelTool.isServerSide(level())){
-            // 服务端当时间未设置时设置时间
-            if (getBombPlantedTickTime() == -1L){
-                setBombPlantedTickTime(level().getGameTime());
-            }
+        // 服务端当时间未设置时设置时间
+        if (getBombPlantedTickTime() == -1L) {
+            setBombPlantedTickTime(level().getGameTime());
         }
+
+        // 标记数据同步完成
+        syncReady();
     }
 
     /* ---------------- Defuse Logic ---------------- */
@@ -177,7 +191,8 @@ public class C4BombEntity extends Entity {
     }
 
     private void defuse() {
-        entityData.set(IS_DEFUSED, true);
+        // 通知客户端炸弹已拆除
+        PacketDistributor.sendToPlayersTrackingEntity(this, new C4BombEventPacket(getId(), C4BombEventType.BOMB_DEFUSED));
         destroy();
     }
 
@@ -212,12 +227,12 @@ public class C4BombEntity extends Entity {
         ) != null;
     }
 
-    private void playDefuseStartSound() {
+    private void broadcastDefuseStartSound() {
         level().playSound(null, blockPosition(), SoundEvents.ANVIL_PLACE, SoundSource.BLOCKS, 1f, 1.2f);
     }
 
-    private void playReadyBoomSound() {
-        level().playSound(null, blockPosition(), ModSounds.C4BOMB_READYBOOM.get(), SoundSource.BLOCKS, 1f, 1f);
+    private void broadcastReadyBoomSound() {
+        level().playSound(null, blockPosition(), ModSounds.C4BOMB_READYBOOM.get(), SoundSource.BLOCKS, 2f, 1f);
     }
 
     /* ---------------- Save ---------------- */
@@ -234,10 +249,10 @@ public class C4BombEntity extends Entity {
         if (tag.contains("fuse")) {
             entityData.set(BOMB_COUNTDOWN, tag.getInt("fuse"));
         }
-        if (tag.contains("bombPlantedTickTime")){
+        if (tag.contains("bombPlantedTickTime")) {
             entityData.set(BOMB_PLANTED_TICK_TIME, tag.getLong("bombPlantedTickTime"));
         }
-        if (tag.contains("willDestroy")){
+        if (tag.contains("willDestroy")) {
             willDestroy = tag.getBoolean("willDestroy");
         }
     }

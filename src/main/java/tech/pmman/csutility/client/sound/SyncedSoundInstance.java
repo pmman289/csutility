@@ -1,6 +1,8 @@
 package tech.pmman.csutility.client.sound;
 
 import com.mojang.blaze3d.audio.Channel;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
@@ -12,18 +14,21 @@ import org.jetbrains.annotations.NotNull;
 
 @OnlyIn(Dist.CLIENT)
 public class SyncedSoundInstance extends AbstractSoundInstance {
+    @Getter
     private final long startTick;
+    @Getter
     private final float maxDistance;
 
+    @Setter
     private Channel channel;
 
     public SyncedSoundInstance(SoundEvent soundEvent,
-                                  Vec3 pos,
-                                  long startTick,
-                                  float volume,
-                                  float maxDistance,
+                               Vec3 pos,
+                               long startTick,
+                               float volume,
+                               float maxDistance,
                                boolean isLoop
-                               ) {
+    ) {
         super(soundEvent, SoundSource.BLOCKS, SoundInstance.createUnseededRandom());
         this.startTick = startTick;
         this.volume = volume;
@@ -37,19 +42,7 @@ public class SyncedSoundInstance extends AbstractSoundInstance {
         this.z = pos.z;
     }
 
-    public long getStartTick() {
-        return startTick;
-    }
-
-    public float getMaxDistance() {
-        return maxDistance;
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
-
-    public void stopPlay(){
+    public void stopPlay() {
         channel.stop();
     }
 

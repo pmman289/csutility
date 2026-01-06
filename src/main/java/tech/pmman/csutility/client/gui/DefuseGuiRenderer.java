@@ -10,7 +10,7 @@ import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
 @OnlyIn(Dist.CLIENT)
 public class DefuseGuiRenderer {
     public static void render(GuiGraphics guiGraphics) {
-        C4BombEntity c4 = ClientC4BombController.getCurrentDefusingBombByMe();
+        C4BombEntity c4 = ClientC4BombController.getBombDefusingByMe();
         if (c4 == null) return;
 
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();

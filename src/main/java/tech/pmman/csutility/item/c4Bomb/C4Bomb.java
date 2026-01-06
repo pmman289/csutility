@@ -20,7 +20,7 @@ import tech.pmman.csutility.CSUtility;
 import tech.pmman.csutility.ModSounds;
 import tech.pmman.csutility.entity.ModEntities;
 import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
-import tech.pmman.csutility.util.LevelTool;
+import tech.pmman.csutility.util.MinecraftTool;
 
 public class C4Bomb extends Item {
     private static final ResourceLocation C4_FREEZE_ID =
@@ -85,7 +85,7 @@ public class C4Bomb extends Item {
     @Override
     public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level,
                              @NotNull LivingEntity livingEntity, int timeCharged) {
-        if (LevelTool.isServerSide(level)){
+        if (MinecraftTool.isServerSide(level)){
             removeFreeze(livingEntity);
             // 广播停止播放音频包
             // 1. 获取声音的 ResourceLocation

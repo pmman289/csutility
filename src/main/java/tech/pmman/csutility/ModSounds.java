@@ -13,7 +13,7 @@ public class ModSounds {
             DeferredRegister.create(BuiltInRegistries.SOUND_EVENT, CSUtility.MODID);
 
     // 注册声音事件
-    public static final DeferredHolder<SoundEvent, SoundEvent> C4BOMB_BEEP =
+    public static final DeferredHolder<SoundEvent, SoundEvent> C4BOMB_PLANTED_TO_READY_BOOM =
             SOUNDS.register("c4bomb_beep", () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(CSUtility.MODID, "c4bomb_beep")
             ));
