@@ -18,8 +18,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.CSUtility;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.entity.ModEntities;
-import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
+import tech.pmman.csutility.object.entity.ModEntities;
+import tech.pmman.csutility.object.entity.c4bomb.ServerC4BombEntity;
 import tech.pmman.csutility.util.MinecraftTool;
 
 public class C4Bomb extends Item {
@@ -116,7 +116,7 @@ public class C4Bomb extends Item {
 
             // 2. 实例化你的 C4 实体
             // 这里的 ModEntities.C4_BOMB.get() 是你之前在 Registry 里注册的 EntityType
-            C4BombEntity c4 = new C4BombEntity(ModEntities.C4BOMB_ENTITY.get(), level);
+            ServerC4BombEntity c4 = new ServerC4BombEntity(ModEntities.C4BOMB_ENTITY.get(), level);
 
             // 3. 设置实体位置
             c4.setPos(x, y, z);

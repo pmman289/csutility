@@ -1,12 +1,11 @@
-package tech.pmman.csutility.listener;
+package tech.pmman.csutility.client.object.entity;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import tech.pmman.csutility.CSUtility;
-import tech.pmman.csutility.entity.ModEntities;
-import tech.pmman.csutility.entity.c4bomb.C4BombRender;
+import tech.pmman.csutility.object.entity.ModEntities;
 
 @EventBusSubscriber(modid = CSUtility.MODID, value = Dist.CLIENT)
 public class EntityRegisterListener {

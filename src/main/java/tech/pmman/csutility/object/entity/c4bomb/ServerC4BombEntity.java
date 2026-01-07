@@ -1,4 +1,4 @@
-package tech.pmman.csutility.entity.c4bomb;
+package tech.pmman.csutility.object.entity.c4bomb;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.*;
@@ -15,7 +15,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.entity.SyncDataEntity;
+import tech.pmman.csutility.object.entity.SyncDataEntity;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventType;
 import tech.pmman.csutility.util.MinecraftTool;
@@ -23,25 +23,25 @@ import tech.pmman.csutility.util.MinecraftTool;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-public class C4BombEntity extends Entity implements SyncDataEntity {
+public class ServerC4BombEntity extends Entity implements SyncDataEntity {
     /* ---------------- Synced Data ---------------- */
 
     public static final EntityDataAccessor<Integer> BOMB_COUNTDOWN =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.INT);
+            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.INT);
 
     public static final EntityDataAccessor<Integer> DEFUSE_COUNTDOWN =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.INT);
+            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.INT);
 
     public static final EntityDataAccessor<String> DEFUSING_PLAYER_UUID =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.STRING);
+            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.STRING);
 
     // 炸弹第一次放置的时间
     public static final EntityDataAccessor<Long> BOMB_PLANTED_TICK_TIME =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.LONG);
+            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.LONG);
 
     // 实体数据是否同步完毕
     public static final EntityDataAccessor<Boolean> IS_READY =
-            SynchedEntityData.defineId(C4BombEntity.class, EntityDataSerializers.BOOLEAN);
+            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.BOOLEAN);
 
     public Long getBombPlantedTickTime() {
         return entityData.get(BOMB_PLANTED_TICK_TIME);
@@ -88,7 +88,7 @@ public class C4BombEntity extends Entity implements SyncDataEntity {
         }
     }
 
-    public C4BombEntity(EntityType<?> type, Level level) {
+    public ServerC4BombEntity(EntityType<?> type, Level level) {
         super(type, level);
         this.noPhysics = true;
     }

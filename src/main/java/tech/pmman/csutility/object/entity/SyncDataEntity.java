@@ -1,4 +1,4 @@
-package tech.pmman.csutility.entity;
+package tech.pmman.csutility.object.entity;
 
 public interface SyncDataEntity {
     /**

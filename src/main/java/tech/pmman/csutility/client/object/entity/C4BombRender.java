@@ -1,4 +1,4 @@
-package tech.pmman.csutility.entity.c4bomb;
+package tech.pmman.csutility.client.object.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -16,15 +16,16 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.item.ModItems;
+import tech.pmman.csutility.object.entity.c4bomb.ServerC4BombEntity;
 
-public class C4BombRender extends EntityRenderer<C4BombEntity> {
+public class C4BombRender extends EntityRenderer<ServerC4BombEntity> {
 
     public C4BombRender(EntityRendererProvider.Context context) {
         super(context);
     }
 
     @Override
-    public void render(@NotNull C4BombEntity entity, float yaw, float partialTicks, PoseStack poseStack,
+    public void render(@NotNull ServerC4BombEntity entity, float yaw, float partialTicks, PoseStack poseStack,
                        @NotNull MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
 
@@ -47,7 +48,7 @@ public class C4BombRender extends EntityRenderer<C4BombEntity> {
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull C4BombEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull ServerC4BombEntity entity) {
         // 当使用 BakedModel 时，贴图通常由模型文件内部指定，这里返回默认即可
         return InventoryMenu.BLOCK_ATLAS;
     }

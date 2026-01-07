@@ -1,4 +1,4 @@
-package tech.pmman.csutility.listener;
+package tech.pmman.csutility.client.vision;
 
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;

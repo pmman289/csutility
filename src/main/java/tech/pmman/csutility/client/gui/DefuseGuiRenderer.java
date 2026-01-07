@@ -4,20 +4,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import tech.pmman.csutility.client.entity.ClientC4BombController;
-import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
+import tech.pmman.csutility.client.object.entity.ClientC4BombEntity;
+import tech.pmman.csutility.object.entity.c4bomb.ServerC4BombEntity;
 
 @OnlyIn(Dist.CLIENT)
 public class DefuseGuiRenderer {
     public static void render(GuiGraphics guiGraphics) {
-        C4BombEntity c4 = ClientC4BombController.getBombDefusingByMe();
+        ServerC4BombEntity c4 = ClientC4BombEntity.getBombDefusingByMe();
         if (c4 == null) return;
 
         int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
         int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
 
         // 10秒(200tick) 倒计时进度计算
-        float countdown = c4.getEntityData().get(C4BombEntity.DEFUSE_COUNTDOWN);
+        float countdown = c4.getEntityData().get(ServerC4BombEntity.DEFUSE_COUNTDOWN);
         float progress = 1.0f - (countdown / 200.0f);
 
         int barWidth = 120;

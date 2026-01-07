@@ -1,9 +1,8 @@
-package tech.pmman.csutility.client.core;
+package tech.pmman.csutility.core.gameObject;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.world.entity.Entity;
 
-public interface ClientController {
+public interface BaseGameObject {
     /**
      * 在controller初始化时执行
      */
@@ -25,11 +24,4 @@ public interface ClientController {
      * 在这里做收尾工作
      */
     void afterRemoved();
-
-    /**
-     * 在这里返回entity供runtime使用
-     *
-     * @return 实体
-     */
-    Entity getEntity();
 }

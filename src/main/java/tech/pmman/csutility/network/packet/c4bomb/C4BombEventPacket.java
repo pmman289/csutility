@@ -1,19 +1,20 @@
 package tech.pmman.csutility.network.packet.c4bomb;
 
 import io.netty.buffer.ByteBuf;
-import lombok.Data;
+import lombok.Getter;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.CSUtility;
-import tech.pmman.csutility.network.core.PacketWithEntityId;
+import tech.pmman.csutility.core.gameObject.network.PacketWithGameObjectId;
 
-@Data
-public class C4BombEventPacket implements CustomPacketPayload, PacketWithEntityId {
-    public int entityId;
-    public C4BombEventType eventType;
+public class C4BombEventPacket implements CustomPacketPayload, PacketWithGameObjectId {
+    @Getter
+    private int entityId;
+    @Getter
+    private C4BombEventType eventType;
 
     public static final CustomPacketPayload.Type<C4BombEventPacket> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(
@@ -25,9 +26,6 @@ public class C4BombEventPacket implements CustomPacketPayload, PacketWithEntityI
             C4BombEventPacket::new
     );
 
-    public C4BombEventPacket() {
-    }
-
     public C4BombEventPacket(int entityId, C4BombEventType eventType) {
         this.entityId = entityId;
         this.eventType = eventType;
@@ -36,5 +34,10 @@ public class C4BombEventPacket implements CustomPacketPayload, PacketWithEntityI
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
+    }
+
+    @Override
+    public int getGameObjectId() {
+        return getEntityId();
     }
 }

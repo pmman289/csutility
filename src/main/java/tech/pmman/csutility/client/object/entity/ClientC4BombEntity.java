@@ -1,4 +1,4 @@
-package tech.pmman.csutility.client.entity;
+package tech.pmman.csutility.client.object.entity;
 
 import lombok.Getter;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -7,23 +7,24 @@ import net.minecraft.world.entity.Entity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.client.core.ClientController;
+import tech.pmman.csutility.client.core.object.entity.ClientGameObjectEntityRuntimeApi;
 import tech.pmman.csutility.client.sound.ClientSoundPlayer;
 import tech.pmman.csutility.client.sound.SyncedSoundInstance;
-import tech.pmman.csutility.entity.c4bomb.C4BombEntity;
+import tech.pmman.csutility.core.gameObject.GameObjectWithEntity;
+import tech.pmman.csutility.object.entity.c4bomb.ServerC4BombEntity;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
 import tech.pmman.csutility.util.MinecraftTool;
 
 @OnlyIn(Dist.CLIENT)
-public final class ClientC4BombController implements ClientController {
+public final class ClientC4BombEntity implements GameObjectWithEntity {
     @Getter
     // 标记正在被我拆除的炸弹
-    private static C4BombEntity bombDefusingByMe;
+    private static ServerC4BombEntity bombDefusingByMe;
 
-    private C4BombEntity entity;
+    private ServerC4BombEntity entity;
     private SyncedSoundInstance bombPlantedSoundInstance;
 
-    public ClientC4BombController(C4BombEntity entity) {
+    public ClientC4BombEntity(ServerC4BombEntity entity) {
         this.entity = entity;
     }
 
@@ -36,7 +37,7 @@ public final class ClientC4BombController implements ClientController {
     public void tick() {
         String stringUUID = MinecraftTool.getLocalPlayerStringUUID();
         // 检测是否是本地玩家在拆除炸弹，否则移除
-        if (bombDefusingByMe != null) {
+        if (bombDefusingByMe != null && entity == bombDefusingByMe) {
             if (stringUUID != null && !stringUUID.equals(entity.getDefusingPlayerUUID())) {
                 bombDefusingByMe = null;
             }
@@ -52,6 +53,8 @@ public final class ClientC4BombController implements ClientController {
                     // 先停止播放beep音效
                     stopPlayBombPlantedSound();
                     playBombDefusedSound();
+                    // 这里可以标记自己为废弃了
+                    ClientGameObjectEntityRuntimeApi.unregister(this);
                 }
             }
         }
