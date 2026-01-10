@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import tech.pmman.csutility.client.core.object.BaseGameObject;
 import tech.pmman.csutility.core.object.entity.ServerEntity;
 import tech.pmman.csutility.core.object.network.PacketWithGameObjectId;
 
@@ -58,7 +59,7 @@ public class ClientEntityRuntime {
             if (clientEntity.getEntity().isReady()) {
                 CLIENT_OBJECT_ENTITY_MAP.put(clientEntity.getEntity().getId(), clientEntity);
                 clientEntity.init();
-                // 补充处理所有pending网络包
+                // 补充处理所有pending的网络包
                 flushPacketQueue(entityId, clientEntity);
                 preRemoveSet.add(entityId);
             }
@@ -73,11 +74,11 @@ public class ClientEntityRuntime {
             if (gameObjectWithEntity.getEntity().isRemoved()) {
                 mainRemoveSet.add(gameObjectWithEntity.getEntity().getId());
                 gameObjectWithEntity.afterRemoved();
-                return;
             }
-            gameObjectWithEntity.tick();
         });
         mainRemoveSet.forEach(c -> CLIENT_OBJECT_ENTITY_MAP.remove((int) c));
+        // 这里重新遍历再调用tick是因为如果在上面tick可能触发ConcurrentModificationException
+        CLIENT_OBJECT_ENTITY_MAP.values().forEach(BaseGameObject::tick);
     }
 
     /**
