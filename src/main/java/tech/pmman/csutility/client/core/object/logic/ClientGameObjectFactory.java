@@ -2,8 +2,7 @@ package tech.pmman.csutility.client.core.object.logic;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import tech.pmman.csutility.core.gameObject.GameObject;
-import tech.pmman.csutility.network.packet.gameObject.GameObjectType;
+import tech.pmman.csutility.core.object.network.GameObjectType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +10,7 @@ import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientGameObjectFactory {
-    private static final Map<GameObjectType, Function<GameObjectType, GameObject>> REGISTRY =
+    private static final Map<GameObjectType, Function<GameObjectType, ClientGameObject>> REGISTRY =
             new HashMap<>();
     private static boolean IS_REGISTERED = false;
 
@@ -28,13 +27,13 @@ public class ClientGameObjectFactory {
      * @param gameObjectType 实体实例
      * @return 对应的gameObject对象
      */
-    public static GameObject createGameObject(GameObjectType gameObjectType) {
+    public static ClientGameObject createGameObject(GameObjectType gameObjectType) {
         // 如果还未注册，则注册
         if (!IS_REGISTERED) {
             register();
         }
 
-        Function<GameObjectType, GameObject> controllerCreator = REGISTRY.get(gameObjectType);
+        Function<GameObjectType, ClientGameObject> controllerCreator = REGISTRY.get(gameObjectType);
         if (controllerCreator != null) {
             return controllerCreator.apply(gameObjectType);
         }

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
-public class ClientGameObjectEntityFactory {
+public class ClientEntityFactory {
     private static final Map<EntityType<?>, Function<Entity, ClientC4BombEntity>> REGISTRY =
             new HashMap<>();
 

@@ -1,4 +1,4 @@
-package tech.pmman.csutility.core.gameObject;
+package tech.pmman.csutility.client.core.object;
 
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 

@@ -7,7 +7,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import tech.pmman.csutility.CSUtility;
 import tech.pmman.csutility.client.core.network.ClientPayloadHandler;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
-import tech.pmman.csutility.network.packet.gameObject.GameObjectCreatePacket;
+import tech.pmman.csutility.core.object.network.GameObjectCreatePacket;
 
 @EventBusSubscriber(modid = CSUtility.MODID)
 public class NetworkRegistry {

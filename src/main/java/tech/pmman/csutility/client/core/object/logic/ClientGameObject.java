@@ -1,6 +1,8 @@
-package tech.pmman.csutility.core.gameObject;
+package tech.pmman.csutility.client.core.object.logic;
 
-public interface GameObject extends BaseGameObject {
+import tech.pmman.csutility.client.core.object.BaseGameObject;
+
+public interface ClientGameObject extends BaseGameObject {
     /**
      * 返回游戏对象id
      *

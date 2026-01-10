@@ -1,4 +1,4 @@
-package tech.pmman.csutility.network.packet.gameObject;
+package tech.pmman.csutility.core.object.network;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;

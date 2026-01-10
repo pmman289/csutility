@@ -3,20 +3,20 @@ package tech.pmman.csutility.client.object.entity;
 import lombok.Getter;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.Entity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.client.core.object.entity.ClientGameObjectEntityRuntimeApi;
+import tech.pmman.csutility.client.core.object.entity.ClientEntityRuntimeApi;
 import tech.pmman.csutility.client.sound.ClientSoundPlayer;
 import tech.pmman.csutility.client.sound.SyncedSoundInstance;
-import tech.pmman.csutility.core.gameObject.GameObjectWithEntity;
+import tech.pmman.csutility.client.core.object.entity.ClientEntity;
+import tech.pmman.csutility.core.object.entity.ServerEntity;
 import tech.pmman.csutility.object.entity.c4bomb.ServerC4BombEntity;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
 import tech.pmman.csutility.util.MinecraftTool;
 
 @OnlyIn(Dist.CLIENT)
-public final class ClientC4BombEntity implements GameObjectWithEntity {
+public final class ClientC4BombEntity implements ClientEntity {
     @Getter
     // 标记正在被我拆除的炸弹
     private static ServerC4BombEntity bombDefusingByMe;
@@ -54,7 +54,7 @@ public final class ClientC4BombEntity implements GameObjectWithEntity {
                     stopPlayBombPlantedSound();
                     playBombDefusedSound();
                     // 这里可以标记自己为废弃了
-                    ClientGameObjectEntityRuntimeApi.unregister(this);
+                    ClientEntityRuntimeApi.unregister(this);
                 }
             }
         }
@@ -68,7 +68,7 @@ public final class ClientC4BombEntity implements GameObjectWithEntity {
     }
 
     @Override
-    public Entity getEntity() {
+    public ServerEntity getEntity() {
         return entity;
     }
 

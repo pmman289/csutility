@@ -1,4 +1,4 @@
-package tech.pmman.csutility.network.packet.gameObject;
+package tech.pmman.csutility.core.object.network;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
@@ -8,7 +8,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.CSUtility;
-import tech.pmman.csutility.core.gameObject.network.PacketWithGameObjectId;
 
 public class GameObjectCreatePacket implements CustomPacketPayload, PacketWithGameObjectId {
     @Getter

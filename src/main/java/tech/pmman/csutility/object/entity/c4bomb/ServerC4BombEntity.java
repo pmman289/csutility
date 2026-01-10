@@ -15,7 +15,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import tech.pmman.csutility.ModSounds;
-import tech.pmman.csutility.object.entity.SyncDataEntity;
+import tech.pmman.csutility.core.object.entity.ServerEntity;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventPacket;
 import tech.pmman.csutility.network.packet.c4bomb.C4BombEventType;
 import tech.pmman.csutility.util.MinecraftTool;
@@ -23,7 +23,7 @@ import tech.pmman.csutility.util.MinecraftTool;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-public class ServerC4BombEntity extends Entity implements SyncDataEntity {
+public class ServerC4BombEntity extends ServerEntity {
     /* ---------------- Synced Data ---------------- */
 
     public static final EntityDataAccessor<Integer> BOMB_COUNTDOWN =
@@ -39,10 +39,6 @@ public class ServerC4BombEntity extends Entity implements SyncDataEntity {
     public static final EntityDataAccessor<Long> BOMB_PLANTED_TICK_TIME =
             SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.LONG);
 
-    // 实体数据是否同步完毕
-    public static final EntityDataAccessor<Boolean> IS_READY =
-            SynchedEntityData.defineId(ServerC4BombEntity.class, EntityDataSerializers.BOOLEAN);
-
     public Long getBombPlantedTickTime() {
         return entityData.get(BOMB_PLANTED_TICK_TIME);
     }
@@ -53,15 +49,6 @@ public class ServerC4BombEntity extends Entity implements SyncDataEntity {
 
     public String getDefusingPlayerUUID() {
         return entityData.get(DEFUSING_PLAYER_UUID);
-    }
-
-    @Override
-    public boolean isReady() {
-        return entityData.get(IS_READY);
-    }
-
-    private void syncReady() {
-        entityData.set(IS_READY, true);
     }
     /* ---------------- Client Data ----------------- */
 
@@ -95,11 +82,11 @@ public class ServerC4BombEntity extends Entity implements SyncDataEntity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
         builder.define(BOMB_COUNTDOWN, 40 * 20);
         builder.define(DEFUSE_COUNTDOWN, 10 * 20);
         builder.define(DEFUSING_PLAYER_UUID, "");
         builder.define(BOMB_PLANTED_TICK_TIME, -1L);
-        builder.define(IS_READY, false);
     }
 
     /* ---------------- Interaction ---------------- */
@@ -121,13 +108,7 @@ public class ServerC4BombEntity extends Entity implements SyncDataEntity {
 
     /* ---------------- Tick ---------------- */
     @Override
-    public void tick() {
-        super.tick();
-
-        // 现在这里只有服务端逻辑
-        if (level().isClientSide()) {
-            return;
-        }
+    public void serverTick() {
         // 延迟销毁逻辑
         if (willDestroy) {
             if (delayDestroyTick-- < 0) {
@@ -156,19 +137,11 @@ public class ServerC4BombEntity extends Entity implements SyncDataEntity {
     }
 
     @Override
-    public void onAddedToLevel() {
-        super.onAddedToLevel();
-        // 不执行客户端逻辑
-        if (level().isClientSide()) {
-            return;
-        }
+    public void onAddedToServerLevel() {
         // 服务端当时间未设置时设置时间
         if (getBombPlantedTickTime() == -1L) {
             setBombPlantedTickTime(level().getGameTime());
         }
-
-        // 标记数据同步完成
-        syncReady();
     }
 
     /* ---------------- Defuse Logic ---------------- */

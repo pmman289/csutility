@@ -1,15 +1,14 @@
 package tech.pmman.csutility.client.core.network;
 
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import tech.pmman.csutility.client.core.object.entity.ClientGameObjectEntityRuntime;
+import tech.pmman.csutility.client.core.object.entity.ClientEntityRuntime;
 import tech.pmman.csutility.client.core.object.logic.ClientGameObjectManager;
-import tech.pmman.csutility.client.core.object.logic.ClientGameObjectRuntime;
-import tech.pmman.csutility.core.gameObject.network.PacketWithGameObjectId;
-import tech.pmman.csutility.network.packet.gameObject.GameObjectCreatePacket;
+import tech.pmman.csutility.core.object.network.PacketWithGameObjectId;
+import tech.pmman.csutility.core.object.network.GameObjectCreatePacket;
 
 public class ClientPayloadHandler {
     public static void c4BombHandler(final PacketWithGameObjectId packet, final IPayloadContext context) {
-        context.enqueueWork(() -> ClientGameObjectEntityRuntime.dispatchPacket(packet));
+        context.enqueueWork(() -> ClientEntityRuntime.dispatchPacket(packet));
     }
 
     /**

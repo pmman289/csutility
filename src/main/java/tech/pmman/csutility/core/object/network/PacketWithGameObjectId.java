@@ -1,4 +1,4 @@
-package tech.pmman.csutility.core.gameObject.network;
+package tech.pmman.csutility.core.object.network;
 
 public interface PacketWithGameObjectId {
     /**

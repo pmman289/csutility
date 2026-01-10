@@ -5,8 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import tech.pmman.csutility.core.gameObject.GameObject;
-import tech.pmman.csutility.core.gameObject.network.PacketWithGameObjectId;
+import tech.pmman.csutility.core.object.network.PacketWithGameObjectId;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -14,7 +13,7 @@ import java.util.HashSet;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientGameObjectRuntime {
-    private static final Int2ObjectMap<GameObject> CLIENT_GAME_OBJECT_MAP =
+    private static final Int2ObjectMap<ClientGameObject> CLIENT_GAME_OBJECT_MAP =
             new Int2ObjectOpenHashMap<>();
 
     // 存放待处理的网络包
@@ -28,7 +27,7 @@ public class ClientGameObjectRuntime {
      * @param gameObjectId 实体id
      * @param gameObject   游戏对象
      */
-    public static void add(int gameObjectId, GameObject gameObject) {
+    public static void add(int gameObjectId, ClientGameObject gameObject) {
         // 添加到列表
         CLIENT_GAME_OBJECT_MAP.put(gameObjectId, gameObject);
         // 尝试处理未处理的包
@@ -41,7 +40,7 @@ public class ClientGameObjectRuntime {
      * @param entityId 实体id
      */
     public static void remove(int entityId) {
-        GameObject gameObject = CLIENT_GAME_OBJECT_MAP.remove(entityId);
+        ClientGameObject gameObject = CLIENT_GAME_OBJECT_MAP.remove(entityId);
         if (gameObject != null) {
             gameObject.afterRemoved();
         }
@@ -79,7 +78,7 @@ public class ClientGameObjectRuntime {
     }
 
     public static void dispatchPacket(final PacketWithGameObjectId packet) {
-        GameObject gameObject = CLIENT_GAME_OBJECT_MAP.get(packet.getGameObjectId());
+        ClientGameObject gameObject = CLIENT_GAME_OBJECT_MAP.get(packet.getGameObjectId());
         if (gameObject != null) {
             gameObject.handlePacket((CustomPacketPayload) packet);
         } else {
@@ -92,12 +91,12 @@ public class ClientGameObjectRuntime {
      * 清理容器
      */
     public static void clear() {
-        CLIENT_GAME_OBJECT_MAP.values().forEach(GameObject::afterRemoved);
+        CLIENT_GAME_OBJECT_MAP.values().forEach(ClientGameObject::afterRemoved);
         CLIENT_GAME_OBJECT_MAP.clear();
         PENDING_PACKET_QUEUE.clear();
     }
 
-    private static void flushPacketQueue(int gameObjectId, GameObject gameObject) {
+    private static void flushPacketQueue(int gameObjectId, ClientGameObject gameObject) {
         Deque<PacketWithGameObjectId> queue = PENDING_PACKET_QUEUE.remove(gameObjectId);
         if (queue == null) return;
 

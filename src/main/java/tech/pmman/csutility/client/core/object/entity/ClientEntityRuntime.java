@@ -5,19 +5,18 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import tech.pmman.csutility.core.gameObject.GameObjectWithEntity;
-import tech.pmman.csutility.object.entity.SyncDataEntity;
-import tech.pmman.csutility.core.gameObject.network.PacketWithGameObjectId;
+import tech.pmman.csutility.core.object.entity.ServerEntity;
+import tech.pmman.csutility.core.object.network.PacketWithGameObjectId;
 
 import java.util.*;
 
 
 @OnlyIn(Dist.CLIENT)
-public class ClientGameObjectEntityRuntime {
+public class ClientEntityRuntime {
     // 这里存放等待数据加载就绪的controller
-    public static final Int2ObjectMap<GameObjectWithEntity> CLIENT_OBJECT_ENTITY_WAIT_READY_MAP =
+    public static final Int2ObjectMap<ClientEntity> CLIENT_OBJECT_ENTITY_WAIT_READY_MAP =
             new Int2ObjectOpenHashMap<>();
-    public static final Int2ObjectMap<GameObjectWithEntity> CLIENT_OBJECT_ENTITY_MAP =
+    public static final Int2ObjectMap<ClientEntity> CLIENT_OBJECT_ENTITY_MAP =
             new Int2ObjectOpenHashMap<>();
 
     // 存放待处理的网络包
@@ -31,9 +30,9 @@ public class ClientGameObjectEntityRuntime {
      * @param entityId             实体id
      * @param gameObjectWithEntity 包含实体的游戏对象
      */
-    public static void add(int entityId, GameObjectWithEntity gameObjectWithEntity) {
+    public static void add(int entityId, ClientEntity gameObjectWithEntity) {
         // 只添加到等待map，然后在tick里检测是否ready
-        if (gameObjectWithEntity.getEntity() instanceof SyncDataEntity) {
+        if (gameObjectWithEntity.getEntity() instanceof ServerEntity) {
             CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.put(gameObjectWithEntity.getEntity().getId(), gameObjectWithEntity);
         } else {
             CLIENT_OBJECT_ENTITY_MAP.put(entityId, gameObjectWithEntity);
@@ -46,7 +45,7 @@ public class ClientGameObjectEntityRuntime {
      * @param entityId 实体id
      */
     public static void remove(int entityId) {
-        GameObjectWithEntity gameObjectWithEntity = CLIENT_OBJECT_ENTITY_MAP.remove(entityId);
+        ClientEntity gameObjectWithEntity = CLIENT_OBJECT_ENTITY_MAP.remove(entityId);
         if (gameObjectWithEntity != null) {
             gameObjectWithEntity.afterRemoved();
         }
@@ -55,12 +54,12 @@ public class ClientGameObjectEntityRuntime {
     private static void checkWaitMap() {
         // 检测待添加的是否数据同步完毕
         HashSet<Integer> preRemoveSet = new HashSet<>();
-        CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.forEach((entityId, gameObjectWithEntity) -> {
-            if (((SyncDataEntity) gameObjectWithEntity.getEntity()).isReady()) {
-                CLIENT_OBJECT_ENTITY_MAP.put(gameObjectWithEntity.getEntity().getId(), gameObjectWithEntity);
-                gameObjectWithEntity.init();
+        CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.forEach((entityId, clientEntity) -> {
+            if (clientEntity.getEntity().isReady()) {
+                CLIENT_OBJECT_ENTITY_MAP.put(clientEntity.getEntity().getId(), clientEntity);
+                clientEntity.init();
                 // 补充处理所有pending网络包
-                flushPacketQueue(entityId, gameObjectWithEntity);
+                flushPacketQueue(entityId, clientEntity);
                 preRemoveSet.add(entityId);
             }
         });
@@ -105,7 +104,7 @@ public class ClientGameObjectEntityRuntime {
     }
 
     public static void dispatchPacket(final PacketWithGameObjectId packet) {
-        GameObjectWithEntity gameObjectWithEntity = CLIENT_OBJECT_ENTITY_MAP.get(packet.getGameObjectId());
+        ClientEntity gameObjectWithEntity = CLIENT_OBJECT_ENTITY_MAP.get(packet.getGameObjectId());
         if (gameObjectWithEntity != null) {
             gameObjectWithEntity.handlePacket((CustomPacketPayload) packet);
         } else {
@@ -118,14 +117,14 @@ public class ClientGameObjectEntityRuntime {
      * 清理容器
      */
     public static void clear() {
-        CLIENT_OBJECT_ENTITY_MAP.values().forEach(GameObjectWithEntity::afterRemoved);
+        CLIENT_OBJECT_ENTITY_MAP.values().forEach(ClientEntity::afterRemoved);
         CLIENT_OBJECT_ENTITY_MAP.clear();
-        CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.values().forEach(GameObjectWithEntity::afterRemoved);
+        CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.values().forEach(ClientEntity::afterRemoved);
         CLIENT_OBJECT_ENTITY_WAIT_READY_MAP.clear();
         PENDING_PACKET_QUEUE.clear();
     }
 
-    private static void flushPacketQueue(int entityId, GameObjectWithEntity gameObjectWithEntity) {
+    private static void flushPacketQueue(int entityId, ClientEntity gameObjectWithEntity) {
         Deque<PacketWithGameObjectId> queue = PENDING_PACKET_QUEUE.remove(entityId);
         if (queue == null) return;
 
